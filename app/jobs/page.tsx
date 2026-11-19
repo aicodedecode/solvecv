@@ -70,6 +70,11 @@ export default function JobsPage() {
   const hasMore = page < pages;
   const n = (dim: Record<string, number> | undefined, key: string) => (dim && dim[key] ? dim[key].toLocaleString("en-IN") : "");
 
+  const countryLabel = (c: string) => {
+    const cnt = (counts && counts.country[c]) || 0;
+    return cnt > 0 ? c + " (" + cnt.toLocaleString("en-IN") + ")" : c;
+  };
+
   const activeFilters: { label: string; clear: () => void }[] = [];
   if (country !== "all") activeFilters.push({ label: country, clear: () => setCountry("all") });
   if (category !== "all") activeFilters.push({ label: category, clear: () => setCategory("all") });
@@ -128,10 +133,10 @@ export default function JobsPage() {
           onClick={() => setRemoteOnly(!remoteOnly)}
           className={`rounded-lg px-3 py-2.5 border text-left transition-colors ${remoteOnly ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20"}`}
         >
-          {remoteOnly ? "\u2713 Remote only" : "Remote only"}
+          {remoteOnly ? "✓ Remote only" : "Remote only"}
         </button>
         <select value={country} onChange={(e) => setCountry(e.target.value)} className="bg-white/[0.04] rounded-lg px-3 py-2.5 border border-white/10 outline-none focus:border-emerald-500/50 text-zinc-300">
-          {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "All countries" : c + (counts ? " (" + n(counts.country, c) + ")" : "")}</option>)}
+          {COUNTRIES.map((c) => <option key={c} value={c}>{c === "all" ? "All countries" : countryLabel(c)}</option>)}
         </select>
         <select value={category} onChange={(e) => setCategory(e.target.value)} className="bg-white/[0.04] rounded-lg px-3 py-2.5 border border-white/10 outline-none focus:border-emerald-500/50 text-zinc-300">
           {CATEGORIES.map((c) => <option key={c} value={c}>{c === "all" ? "All fields" : c}</option>)}
@@ -148,7 +153,7 @@ export default function JobsPage() {
         </span>
         {activeFilters.map((f) => (
           <button key={f.label} onClick={f.clear} className="chip text-xs text-emerald-300 border-emerald-500/40 bg-emerald-500/10">
-            {f.label} \u00d7
+            {f.label} ×
           </button>
         ))}
         {activeFilters.length > 1 && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { marked } from "marked";
 import type { Tool } from "@/lib/tools";
@@ -42,6 +42,16 @@ export default function ToolRunner({ tool }: { tool: Tool }) {
   }
 
   const html = result ? marked.parse(result) as string : "";
+
+  const downloadUrl = useMemo(
+    () => (result ? URL.createObjectURL(new Blob([result], { type: "text/markdown" })) : ""),
+    [result]
+  );
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [downloadUrl]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
@@ -86,7 +96,7 @@ export default function ToolRunner({ tool }: { tool: Tool }) {
           {loading ? "Working" : "Run it"}
         </button>
         {loading && <p className="text-sm mt-3" style={{ color: "var(--mute)" }}>Writing. This takes up to half a minute.</p>}
-        {error && <p className="text-sm mt-3" style={{ color: "#a03030" }}>{error}</p>}
+        {error && <div role="alert" className="hairline p-4 mt-3 text-sm" style={{ color: "#f87171" }}>{error}</div>}
       </div>
       <div>
         {result ? (
@@ -95,7 +105,7 @@ export default function ToolRunner({ tool }: { tool: Tool }) {
               <span className="text-xs uppercase tracking-wide" style={{ color: "var(--moss)" }}>Result</span>
               <div className="flex gap-3 text-xs">
                 <button onClick={() => navigator.clipboard.writeText(result)} className="underline underline-offset-4">Copy</button>
-                <a href={URL.createObjectURL(new Blob([result], { type: "text/markdown" }))} download={tool.slug + ".md"} className="underline underline-offset-4">Download</a>
+                <a href={downloadUrl} download={tool.slug + ".md"} className="underline underline-offset-4">Download</a>
               </div>
             </div>
             <div className="hairline p-5 result-md" dangerouslySetInnerHTML={{ __html: html }} />
