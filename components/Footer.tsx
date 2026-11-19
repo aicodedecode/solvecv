@@ -35,7 +35,7 @@ export default function Footer() {
       </div>
       <div className="border-t border-white/[0.05]">
         <div className="max-w-6xl mx-auto px-4 py-5 text-xs flex flex-wrap justify-between gap-2 text-zinc-600">
-          <span>Listings come from public job APIs and link to the original posting.</span>
+          <span>Listings come from public job APIs and link to the original posting. India, UK, US, Germany and Canada feeds include Jobs by Adzuna.</span>
           <span>{new Date().getFullYear()}</span>
         </div>
       </div>
