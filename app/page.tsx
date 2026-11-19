@@ -17,117 +17,143 @@ const CATEGORIES = ["engineering", "data and ai", "design", "product", "marketin
 
 const STATS: [string, string][] = [
   ["28", "free tools"],
-  ["4", "job sources"],
-  ["0", "rupees, ever"],
-  ["1", "page of setup"],
+  ["4", "live job sources"],
+  ["₹0", "forever"],
+  ["0", "accounts required"],
 ];
 
 export default async function Home() {
   let jobs: Awaited<ReturnType<typeof getJobs>> = [];
   try {
-    jobs = (await getJobs()).slice(0, 12);
+    jobs = (await getJobs()).slice(0, 8);
   } catch {
     jobs = [];
   }
-  const tools = publicTools().filter((t) => t.kind === "ai" || t.customPage).slice(0, 8);
+  const featured = publicTools().filter((t) => t.kind === "ai" || t.customPage).slice(0, 7);
 
   return (
     <div>
-      <section className="max-w-6xl mx-auto px-4 pt-14 pb-12">
-        <div className="max-w-2xl">
-          <p className="text-xs uppercase tracking-widest mb-4" style={{ color: "var(--moss)" }}>
-            Free. No signup. No resume upload.
-          </p>
-          <h1 className="text-4xl md:text-5xl font-semibold leading-tight mb-5" style={{ fontFamily: "Georgia, serif" }}>
-            Everything a job search needs, minus the paywall.
-          </h1>
-          <p className="text-[15px] mb-7" style={{ color: "var(--mute)" }}>
-            Fresh listings from public job sources, 28 tools that write the documents, score the resume, and run the interview. Your applications live in your browser, not our servers.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/jobs" className="btn-primary text-sm">Browse jobs</Link>
-            <Link href="/tools/ats-checker" className="btn-secondary text-sm">Score my resume</Link>
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid" />
+        <div className="orb w-[500px] h-[500px] -top-40 -left-40 animate-float" style={{ background: "radial-gradient(circle, rgba(16,185,129,0.22), transparent 70%)" }} />
+        <div className="orb w-[420px] h-[420px] top-10 right-0 animate-float-slow" style={{ background: "radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%)" }} />
+        <div className="max-w-6xl mx-auto px-4 pt-24 pb-20 relative">
+          <div className="max-w-3xl animate-fade-up">
+            <div className="glass inline-flex items-center gap-2 px-4 py-1.5 text-xs text-zinc-300 mb-7">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Free. No signup. No resume upload.
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] mb-6">
+              The job hunt, minus
+              <br />
+              <span className="gradient-text">everything that wastes it.</span>
+            </h1>
+            <p className="text-lg text-zinc-400 max-w-xl mb-9 leading-relaxed">
+              Live openings from four public job sources, 28 AI tools that write the documents, score the resume, and run the interview. Everything stays in your browser.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/jobs" className="btn-primary">Browse live jobs</Link>
+              <Link href="/tools/ats-checker" className="btn-secondary">Score my resume</Link>
+            </div>
+            <p className="font-mono text-xs text-zinc-600 mt-8 tracking-wide">
+              4 SOURCES · 28 TOOLS · ₹0 FOREVER
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="bg-ink text-paper">
-        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 font-mono">
+      {/* Stats */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {STATS.map(([n, l]) => (
-            <div key={l}>
-              <div className="text-3xl font-semibold">{n}</div>
-              <div className="text-xs uppercase tracking-wide mt-1 opacity-80">{l}</div>
+            <div key={l} className="glass card-hover p-6">
+              <div className="font-mono text-3xl font-bold gradient-text">{n}</div>
+              <div className="text-xs uppercase tracking-widest text-zinc-500 mt-1">{l}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-12">
-        <div className="flex items-end justify-between mb-5">
-          <h2 className="text-2xl font-semibold" style={{ fontFamily: "Georgia, serif" }}>Latest jobs</h2>
-          <Link href="/jobs" className="text-sm underline underline-offset-4">See all</Link>
+      {/* Latest jobs */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="flex items-end justify-between mb-6">
+          <h2 className="text-2xl font-bold tracking-tight">Latest openings</h2>
+          <Link href="/jobs" className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors">See all →</Link>
         </div>
         {jobs.length > 0 ? (
-          <div className="hairline divide-y" style={{ borderColor: "var(--line)" }}>
+          <div className="grid md:grid-cols-2 gap-4">
             {jobs.map((j) => (
-              <Link key={j.id} href={`/jobs/${j.id}`} className="block px-4 py-3 hover:bg-black/[0.03]">
-                <div className="flex justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{j.title}</div>
-                    <div className="text-sm" style={{ color: "var(--mute)" }}>{j.company}</div>
-                  </div>
-                  <div className="text-right text-xs shrink-0 font-mono" style={{ color: "var(--mute)" }}>
-                    <div>{j.location}</div>
-                    <div className="uppercase">{j.source}</div>
-                  </div>
+              <Link key={j.id} href={`/jobs/${j.id}`} className="glass card-hover p-5 block group">
+                <div className="flex justify-between gap-3 mb-2">
+                  <div className="font-medium group-hover:text-emerald-300 transition-colors truncate">{j.title}</div>
+                  <span className="shrink-0 text-[10px] uppercase tracking-wider font-mono text-zinc-500 border border-white/10 rounded-full px-2 py-0.5">{j.source}</span>
+                </div>
+                <div className="text-sm text-zinc-500 flex justify-between gap-3">
+                  <span className="truncate">{j.company}</span>
+                  <span className="shrink-0 font-mono text-xs">{j.location}</span>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-sm" style={{ color: "var(--mute)" }}>The job index is warming up. Try the browse page in a minute.</p>
+          <div className="glass p-8 text-sm text-zinc-500">The job index is warming up. Try the browse page in a minute.</div>
         )}
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pb-12">
-        <h2 className="text-2xl font-semibold mb-5" style={{ fontFamily: "Georgia, serif" }}>Browse by place</h2>
-        <div className="flex flex-wrap gap-2 mb-8">
+      {/* Browse */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <h2 className="text-2xl font-bold tracking-tight mb-6">Browse by place</h2>
+        <div className="flex flex-wrap gap-2.5 mb-10">
           {COUNTRIES.map((c) => (
-            <Link key={c.slug} href={`/jobs?country=${encodeURIComponent(c.slug)}`} className="hairline px-3 py-1.5 text-sm hover:border-ink">
+            <Link key={c.slug} href={`/jobs?country=${encodeURIComponent(c.slug)}`} className="chip text-zinc-300">
               {c.label}
             </Link>
           ))}
         </div>
-        <h2 className="text-2xl font-semibold mb-5" style={{ fontFamily: "Georgia, serif" }}>Browse by field</h2>
-        <div className="flex flex-wrap gap-2">
+        <h2 className="text-2xl font-bold tracking-tight mb-6">Browse by field</h2>
+        <div className="flex flex-wrap gap-2.5">
           {CATEGORIES.map((c) => (
-            <Link key={c} href={`/jobs?category=${encodeURIComponent(c)}`} className="hairline px-3 py-1.5 text-sm hover:border-ink">
+            <Link key={c} href={`/jobs?category=${encodeURIComponent(c)}`} className="chip text-zinc-300">
               {c}
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pb-12">
-        <div className="flex items-end justify-between mb-5">
-          <h2 className="text-2xl font-semibold" style={{ fontFamily: "Georgia, serif" }}>The tools</h2>
-          <Link href="/tools" className="text-sm underline underline-offset-4">All 28</Link>
+      {/* Tools bento */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="flex items-end justify-between mb-6">
+          <h2 className="text-2xl font-bold tracking-tight">The toolkit</h2>
+          <Link href="/tools" className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors">All 28 →</Link>
         </div>
-        <div className="grid sm:grid-cols-2 gap-px" style={{ backgroundColor: "var(--line)" }}>
-          {tools.map((t) => (
-            <Link key={t.slug} href={t.customPage || `/tools/${t.slug}`} className="bg-paper p-5 hover:bg-black/[0.03] block">
-              <div className="font-medium mb-1">{t.name}</div>
-              <div className="text-sm" style={{ color: "var(--mute)" }}>{t.blurb}</div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {featured.map((t, i) => (
+            <Link
+              key={t.slug}
+              href={t.customPage || `/tools/${t.slug}`}
+              className={`glass card-hover p-6 block group ${i === 0 ? "md:col-span-2 relative overflow-hidden" : ""}`}
+            >
+              {i === 0 && (
+                <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-60" style={{ background: "radial-gradient(circle, rgba(16,185,129,0.25), transparent 70%)" }} />
+              )}
+              <div className="text-[10px] uppercase tracking-widest text-emerald-400/80 mb-2">{t.category}</div>
+              <div className="font-semibold text-lg mb-1.5 group-hover:text-emerald-300 transition-colors">{t.name}</div>
+              <div className="text-sm text-zinc-500 leading-relaxed">{t.blurb}</div>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="hairline p-8 md:p-12 text-center">
-          <h2 className="text-2xl font-semibold mb-3" style={{ fontFamily: "Georgia, serif" }}>Job alerts, once a week</h2>
-          <p className="text-sm mb-6" style={{ color: "var(--mute)" }}>A Friday email with the week's best matches by field. Unsubscribe in one click.</p>
-          <Link href="/subscribe" className="btn-primary text-sm">Get the alerts</Link>
+      {/* CTA */}
+      <section className="max-w-6xl mx-auto px-4 pb-20">
+        <div className="p-[1px] rounded-2xl bg-gradient-to-r from-emerald-500/40 via-emerald-500/10 to-sky-500/30">
+          <div className="rounded-2xl bg-[#0d0d10] px-8 py-14 text-center relative overflow-hidden">
+            <div className="orb w-72 h-72 -bottom-32 left-1/2 -translate-x-1/2" style={{ background: "radial-gradient(circle, rgba(16,185,129,0.18), transparent 70%)" }} />
+            <h2 className="text-3xl font-bold tracking-tight mb-3 relative">Job alerts, once a week</h2>
+            <p className="text-sm text-zinc-500 mb-8 relative">A Friday email with the week's best matches by field. One click to leave.</p>
+            <Link href="/subscribe" className="btn-primary relative">Get the alerts</Link>
+          </div>
         </div>
       </section>
     </div>
