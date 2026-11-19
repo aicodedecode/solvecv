@@ -50,64 +50,58 @@ export default function JobsPage() {
   const pages = Math.ceil(total / 25);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold mb-2" style={{ fontFamily: "Georgia, serif" }}>Jobs</h1>
-      <p className="text-sm mb-6" style={{ color: "var(--mute)" }}>
-        Pulled from public job APIs and refreshed continuously. Every listing opens at the original source.
-      </p>
+    <div className="max-w-6xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold tracking-tight mb-3">
+        Live <span className="gradient-text">jobs</span>
+      </h1>
+      <p className="text-zinc-500 mb-8">Refreshed continuously from public job sources. Every listing opens at the original employer posting.</p>
 
-      <div className="hairline p-4 mb-6">
+      <div className="glass p-4 mb-8">
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setPage(1); }}
           placeholder="Search title, company, or skill"
-          className="w-full bg-transparent px-3 py-2 text-sm outline-none mb-3"
-          style={{ border: "1px solid var(--line)" }}
+          className="w-full bg-white/[0.04] rounded-lg px-4 py-2.5 text-sm outline-none border border-white/10 focus:border-emerald-500/50 transition-colors mb-3 placeholder:text-zinc-600"
         />
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
           <label className="flex items-center gap-2">
-            <span style={{ color: "var(--mute)" }}>Country</span>
-            <select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1); }} className="flex-1 bg-transparent px-2 py-1.5" style={{ border: "1px solid var(--line)" }}>
+            <span className="text-zinc-500 text-xs uppercase tracking-wider">Country</span>
+            <select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1); }} className="flex-1 bg-white/[0.04] rounded-lg px-3 py-2 border border-white/10 outline-none focus:border-emerald-500/50 text-zinc-300">
               {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-2">
-            <span style={{ color: "var(--mute)" }}>Field</span>
-            <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="flex-1 bg-transparent px-2 py-1.5" style={{ border: "1px solid var(--line)" }}>
+            <span className="text-zinc-500 text-xs uppercase tracking-wider">Field</span>
+            <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} className="flex-1 bg-white/[0.04] rounded-lg px-3 py-2 border border-white/10 outline-none focus:border-emerald-500/50 text-zinc-300">
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-2">
-            <span style={{ color: "var(--mute)" }}>Type</span>
-            <select value={type} onChange={(e) => { setType(e.target.value); setPage(1); }} className="flex-1 bg-transparent px-2 py-1.5" style={{ border: "1px solid var(--line)" }}>
+            <span className="text-zinc-500 text-xs uppercase tracking-wider">Type</span>
+            <select value={type} onChange={(e) => { setType(e.target.value); setPage(1); }} className="flex-1 bg-white/[0.04] rounded-lg px-3 py-2 border border-white/10 outline-none focus:border-emerald-500/50 text-zinc-300">
               {TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
         </div>
       </div>
 
-      <div className="text-xs font-mono mb-3" style={{ color: "var(--mute)" }}>
-        {loading ? "loading..." : total + " jobs"}
+      <div className="text-xs font-mono text-zinc-600 mb-4">
+        {loading ? "loading..." : total.toLocaleString() + " jobs"}
       </div>
 
-      {error && <p className="text-sm mb-4" style={{ color: "#a03030" }}>{error}</p>}
+      {error && <p className="text-sm mb-4 text-red-400">{error}</p>}
 
       {jobs.length > 0 && (
-        <div className="hairline divide-y" style={{ borderColor: "var(--line)" }}>
+        <div className="grid md:grid-cols-2 gap-4">
           {jobs.map((j) => (
-            <Link key={j.id} href={`/jobs/${j.id}`} className="block px-4 py-3.5 hover:bg-black/[0.03]">
-              <div className="flex justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{j.title}</div>
-                  <div className="text-sm" style={{ color: "var(--mute)" }}>
-                    {j.company}
-                    {j.tags.length > 0 && <span> · {j.tags.slice(0, 3).join(", ")}</span>}
-                  </div>
-                </div>
-                <div className="text-right text-xs shrink-0 font-mono" style={{ color: "var(--mute)" }}>
-                  <div>{j.location}</div>
-                  <div className="uppercase">{j.source}{j.type ? " · " + j.type : ""}</div>
-                </div>
+            <Link key={j.id} href={`/jobs/${j.id}`} className="glass card-hover p-5 block group">
+              <div className="flex justify-between gap-3 mb-2">
+                <div className="font-medium group-hover:text-emerald-300 transition-colors truncate">{j.title}</div>
+                <span className="shrink-0 text-[10px] uppercase tracking-wider font-mono text-zinc-500 border border-white/10 rounded-full px-2 py-0.5">{j.source}</span>
+              </div>
+              <div className="text-sm text-zinc-500 flex justify-between gap-3">
+                <span className="truncate">{j.company}{j.tags.length > 0 && <span className="text-zinc-600"> · {j.tags.slice(0, 3).join(", ")}</span>}</span>
+                <span className="shrink-0 font-mono text-xs">{j.location}{j.type ? " · " + j.type : ""}</span>
               </div>
             </Link>
           ))}
@@ -115,14 +109,14 @@ export default function JobsPage() {
       )}
 
       {!loading && !error && jobs.length === 0 && (
-        <p className="text-sm" style={{ color: "var(--mute)" }}>Nothing matches. Widen the filters; the index covers remote-heavy boards best.</p>
+        <div className="glass p-8 text-sm text-zinc-500">Nothing matches. Widen the filters; the index covers remote-heavy boards best.</div>
       )}
 
       {pages > 1 && (
-        <div className="flex justify-center gap-3 mt-6 text-sm">
-          {page > 1 && <button onClick={() => setPage(page - 1)} className="underline underline-offset-4">Previous</button>}
-          <span className="font-mono" style={{ color: "var(--mute)" }}>{page} / {pages}</span>
-          {page < pages && <button onClick={() => setPage(page + 1)} className="underline underline-offset-4">Next</button>}
+        <div className="flex justify-center items-center gap-4 mt-8 text-sm">
+          {page > 1 && <button onClick={() => setPage(page - 1)} className="btn-secondary text-xs">Previous</button>}
+          <span className="font-mono text-xs text-zinc-500">{page} / {pages}</span>
+          {page < pages && <button onClick={() => setPage(page + 1)} className="btn-secondary text-xs">Next</button>}
         </div>
       )}
     </div>

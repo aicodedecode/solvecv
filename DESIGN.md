@@ -1,26 +1,28 @@
 # SolveCV design direction
 
-Product: free job board plus AI career tools for job seekers, India-heavy.
+Product: free job board plus AI career tools for job seekers.
 Audience: job seekers, freshers to mid-level, often on phones, often stressed.
-Mood: workwear utility. A document, not a dashboard. Calm, dense, honest.
+Mood: modern product UI in the shadcn/21st.dev idiom. Dark, glassy, calm, confident.
 
-Palette (2 core + 1 accent, no gradients anywhere):
-- paper #f6f4ee (warm off-white, the page itself, like good resume paper)
-- ink #1c1a16 (text, borders, primary buttons)
-- moss #0e6b3f (one accent: scores, links, the primary CTA shadow, active states)
-- mute #6b675e for secondary text. No other colors except semantic red for errors.
+Palette (CSS variables in globals.css, single dark theme):
+- paper #09090b (page background)
+- surface #111114 (raised surfaces)
+- ink #f4f4f5 (primary text)
+- mute #a1a1aa (secondary text)
+- moss #10b981 emerald (accent, CTAs, links, active states)
+- line rgba(255,255,255,0.09) (hairlines and card borders)
 
-Typography:
-- Display and headings: Georgia serif, tight leading. Feels editorial, not startup.
-- Body and UI: system-ui sans.
-- Numbers, scores, dates, stats: ui-monospace. Numbers are the product's currency,
-  so they get their own voice.
+Surfaces and motion:
+- .glass: translucent white 4% fill, 16px backdrop blur, 1px white/10 border, 14px radius.
+- .card-hover: lifts 2px, border tints emerald, deep shadow on hover. Every interactive card gets it.
+- .btn-primary: emerald gradient fill, dark text, glow shadow on hover. .btn-secondary: glass pill.
+- .gradient-text: emerald-to-sky gradient for the one hero accent and stat numbers.
+- Hero: faint 56px grid masked to a radial fade, two slow-floating blurred orbs behind the headline.
+- Chips: pill buttons for browse filters, emerald tint on hover.
+- Bento grid on the homepage toolkit section: first card spans two columns with an orb behind it.
+- No emoji in UI, no stock illustrations, no purple. Motion is restrained: float, fade-up, hover lift only.
 
-Surfaces:
-- 1px hairline borders (ink at 14%), radius 2px. Cards are flat. No shadows except
-  one hard offset shadow (3px 3px 0 moss) on the single primary CTA.
-- Section rhythm varies: some sections are dense lists, some are open prose,
-  the stats band is a black strip with paper text. No repeated card-grid cadence.
-- No glass, no glow, no grid background, no colored left stripes, no arrow on every
-  button, no emoji in UI, no sparkle icons. Icons: text labels do the work; where a
-  mark is needed use a small filled square in moss.
+Typography: Inter/system sans throughout, tight tracking on headings, mono for numbers and metadata.
+
+Legacy: the first build used a warm paper/serif look; replaced 2026-11-19 after user review.
+The resume .sheet stays white for print fidelity.
