@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getJobs } from "@/lib/jobs";
-import { publicTools, TOOL_CATEGORIES } from "@/lib/tools";
+import { publicTools } from "@/lib/tools";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -14,6 +14,13 @@ const COUNTRIES = [
   { slug: "canada", label: "Canada" },
 ];
 const CATEGORIES = ["engineering", "data and ai", "design", "product", "marketing", "sales", "support"];
+
+const STATS: [string, string][] = [
+  ["28", "free tools"],
+  ["4", "job sources"],
+  ["0", "rupees, ever"],
+  ["1", "page of setup"],
+];
 
 export default async function Home() {
   let jobs: Awaited<ReturnType<typeof getJobs>> = [];
@@ -35,7 +42,7 @@ export default async function Home() {
             Everything a job search needs, minus the paywall.
           </h1>
           <p className="text-[15px] mb-7" style={{ color: "var(--mute)" }}>
-            Fresh listings from public employer sources, 28 tools that write the documents, score the resume, and run the interview. Your applications live in your browser, not our servers.
+            Fresh listings from public job sources, 28 tools that write the documents, score the resume, and run the interview. Your applications live in your browser, not our servers.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/jobs" className="btn-primary text-sm">Browse jobs</Link>
@@ -46,7 +53,7 @@ export default async function Home() {
 
       <section className="bg-ink text-paper">
         <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 font-mono">
-          {["28", "free tools"], ["4", "job sources"], ["0", "rupees, ever"], ["1", "page of setup"]}.map(([n, l]) => (
+          {STATS.map(([n, l]) => (
             <div key={l}>
               <div className="text-3xl font-semibold">{n}</div>
               <div className="text-xs uppercase tracking-wide mt-1 opacity-80">{l}</div>
@@ -63,7 +70,7 @@ export default async function Home() {
         {jobs.length > 0 ? (
           <div className="hairline divide-y" style={{ borderColor: "var(--line)" }}>
             {jobs.map((j) => (
-              <a key={j.id} href={`/jobs/${j.id}`} className="block px-4 py-3 hover:bg-black/[0.03]">
+              <Link key={j.id} href={`/jobs/${j.id}`} className="block px-4 py-3 hover:bg-black/[0.03]">
                 <div className="flex justify-between gap-4">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{j.title}</div>
@@ -74,7 +81,7 @@ export default async function Home() {
                     <div className="uppercase">{j.source}</div>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         ) : (
