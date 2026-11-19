@@ -3,9 +3,10 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 
-function norm(t: string): string {
+function norm(t: string): string[] {
   return t.toLowerCase().replace(/[^a-z0-9+#./ -]/g, " ").split(/\s+/).filter(Boolean);
 }
+
 const STOP = new Set(["and", "or", "the", "a", "an", "to", "of", "in", "for", "with", "on", "at", "is", "are", "be", "will", "you", "we", "our", "your", "their", "this", "that", "as", "by", "it", "from", "have", "has", "can", "should", "must", "other", "years", "year", "experience", "work", "working", "team", "teams", "role", "job", "company", "candidate", "candidates", "strong", "good", "new", "who", "what", "how", "all", "any", "not", "also", "more", "than"]);
 
 function score(resumeText: string, jdText: string) {
@@ -13,12 +14,6 @@ function score(resumeText: string, jdText: string) {
   const resWords = new Set(norm(resumeText));
   const jdFreq = new Map<string, number>();
   for (const w of jdWords) jdFreq.set(w, (jdFreq.get(w) || 0) + 1);
-  const phrases = (jdText.match(/[a-z][a-z+#.]+(\s+[a-z][a-z+#.]+){1,2}/gi) || [])
-    .map((p) => p.toLowerCase().trim())
-    .filter((p) => p.length > 4);
-  const phraseFreq = new Map<string, number>();
-  for (const p of phrases) phraseFreq.set(p, (phraseFreq.get(p) || 0) + 1);
-
   const kwScored = [...jdFreq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25);
   const kwHave = kwScored.filter(([w]) => resWords.has(w));
   const kwMissing = kwScored.filter(([w]) => !resWords.has(w));
@@ -81,7 +76,7 @@ export default function AtsChecker() {
                 <div className="hairline p-5 mb-4">
                   <div className="font-semibold mb-2">Missing keywords worth adding</div>
                   <p className="text-sm" style={{ color: "var(--mute)" }}>{r.kwMissing.map(([w]) => w).join(", ")}</p>
-                  <p className="text-xs mt-2" style={{ color: "var(--mute)" }}>Only add the ones your work genuinely covers. Ask the AI fixes tool to rewrite lines honestly.</p>
+                  <p className="text-xs mt-2" style={{ color: "var(--mute)" }}>Only add the ones your work genuinely covers. The honest phrasing beats keyword stuffing; screeners do read.</p>
                 </div>
               )}
               <div className="hairline p-5">
@@ -92,9 +87,6 @@ export default function AtsChecker() {
                   ))}
                 </ul>
               </div>
-              <Link href={`/tools/ats-fixes?resume=${encodeURIComponent(resume.slice(0, 6000))}&jd=${encodeURIComponent(jd.slice(0, 4000))}`} className="btn-secondary text-sm mt-4 inline-block">
-                Get AI fixes for the missing pieces
-              </Link>
             </div>
           ) : (
             <div className="hairline p-5 h-full flex items-center justify-center text-sm" style={{ color: "var(--mute)" }}>
