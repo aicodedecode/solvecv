@@ -11,6 +11,7 @@ export type Job = {
   date: string | null;
   category: string;
   country: string;
+  salary?: string;
 };
 
 const COUNTRIES: [RegExp, string][] = [
@@ -47,7 +48,7 @@ const CATEGORIES: [RegExp, string][] = [
 
 function normalizeType(raw: string): string {
   const t = (raw || "").toLowerCase().replace(/[_-]/g, " ");
-  if (t.includes("full")) return "full-time";
+  if (t.includes("full") || t.includes("permanent")) return "full-time";
   if (t.includes("part")) return "part-time";
   if (t.includes("contract")) return "contract";
   if (t.includes("intern") || t.includes("trainee")) return "internship";
@@ -57,7 +58,7 @@ function normalizeType(raw: string): string {
 }
 
 function detectCountry(location: string, remote: boolean): string {
-  if (remote && (!location || /remote|anywhere/i.test(location))) return "remote";
+  if (remote && (!location || /remote|anywhere|work from home/i.test(location))) return "remote";
   for (const [re, name] of COUNTRIES) {
     if (re.test(location)) return name;
   }
@@ -80,6 +81,7 @@ const TTL = 30 * 60 * 1000;
 
 type Raw = Record<string, unknown>;
 const s = (o: Raw, k: string): string => (typeof o[k] === "string" ? (o[k] as string) : "");
+const sub = (o: Raw, k: string): Raw => (o[k] && typeof o[k] === "object" ? (o[k] as Raw) : {});
 
 async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
   const r = await fetch(url, {
@@ -178,9 +180,68 @@ async function loadRemoteOk(): Promise<Job[]> {
     });
 }
 
+const ADZUNA_FEEDS: [string, string, string][] = [
+  ["in", "india", "\u20b9"],
+  ["gb", "united kingdom", "\u00a3"],
+  ["us", "united states", "$"],
+  ["de", "germany", "\u20ac"],
+  ["ca", "canada", "C$"],
+];
+
+function compactMoney(n: number): string {
+  return new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 0 }).format(n);
+}
+
+async function loadAdzuna(): Promise<Job[]> {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) return [];
+  const feeds = await Promise.allSettled(
+    ADZUNA_FEEDS.map(async ([cc, country, currency]) => {
+      const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=50&content-type=application/json`;
+      const data = (await fetchJson(url)) as { results?: Raw[] };
+      return ((data.results || []) as Raw[]).map((j: Raw): Job => {
+        const title = s(j, "title").replace(/<[^>]+>/g, "").trim();
+        const company = s(sub(j, "company"), "display_name");
+        const loc = s(sub(j, "location"), "display_name");
+        const remote = /remote|work from home/i.test(loc);
+        const min = typeof j.salary_min === "number" ? (j.salary_min as number) : 0;
+        const max = typeof j.salary_max === "number" ? (j.salary_max as number) : 0;
+        const salary =
+          min > 0 && max > 0
+            ? `${currency}${compactMoney(min)} \u2013 ${currency}${compactMoney(max)}`
+            : min > 0
+              ? `${currency}${compactMoney(min)}+`
+              : undefined;
+        const cat = s(sub(j, "category"), "tag");
+        return {
+          id: makeId("adzuna", s(j, "redirect_url")),
+          title,
+          company,
+          location: loc || country,
+          remote,
+          type: normalizeType(s(j, "contract_type")),
+          tags: [cat].filter(Boolean).slice(0, 3),
+          url: s(j, "redirect_url"),
+          source: "adzuna",
+          date: s(j, "created") || null,
+          category: detectCategory(title + " " + cat),
+          country: remote ? detectCountry(loc, remote) : country,
+          salary,
+        };
+      });
+    })
+  );
+  const out: Job[] = [];
+  for (const r of feeds) if (r.status === "fulfilled") out.push(...r.value);
+  return out;
+}
+
+const SOURCES = [loadAdzuna, loadArbeitnow, loadRemotive, loadJobicy, loadRemoteOk];
+
 export async function getJobs(): Promise<Job[]> {
   if (cache && Date.now() - cache.at < TTL) return cache.jobs;
-  const results = await Promise.allSettled([loadArbeitnow(), loadRemotive(), loadJobicy(), loadRemoteOk()]);
+  const results = await Promise.allSettled(SOURCES.map((fn) => fn()));
   const jobs: Job[] = [];
   const seen = new Set<string>();
   for (const r of results) {
@@ -198,22 +259,61 @@ export async function getJobs(): Promise<Job[]> {
   return jobs;
 }
 
-export function filterJobs(
-  jobs: Job[],
-  opts: { q?: string; country?: string; category?: string; type?: string; remote?: boolean }
-): Job[] {
+export type FilterOpts = {
+  q?: string;
+  country?: string;
+  category?: string;
+  type?: string;
+  remote?: boolean;
+  sort?: "date" | "relevance";
+};
+
+export function relevanceScore(j: Job, tokens: string[]): number {
+  const title = j.title.toLowerCase();
+  const company = j.company.toLowerCase();
+  const tags = j.tags.join(" ").toLowerCase();
+  let score = 0;
+  for (const t of tokens) {
+    if (title.includes(t)) score += 3;
+    else if (tags.includes(t)) score += 1.5;
+    if (company.includes(t)) score += 1;
+  }
+  if (tokens.length > 0 && title.startsWith(tokens[0])) score += 1;
+  return score;
+}
+
+export function filterJobs(jobs: Job[], opts: FilterOpts): Job[] {
   const q = (opts.q || "").trim().toLowerCase();
-  return jobs.filter((j) => {
+  const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
+  const filtered = jobs.filter((j) => {
     if (opts.remote === true && !j.remote) return false;
     if (opts.country && opts.country !== "all" && j.country !== opts.country) return false;
     if (opts.category && opts.category !== "all" && j.category !== opts.category) return false;
     if (opts.type && opts.type !== "all" && j.type !== opts.type) return false;
     if (q) {
       const hay = (j.title + " " + j.company + " " + j.tags.join(" ")).toLowerCase();
-      if (!hay.includes(q)) return false;
+      if (!tokens.every((t) => hay.includes(t))) return false;
     }
     return true;
   });
+  if (tokens.length > 0 && opts.sort !== "date") {
+    return filtered.sort((a, b) => relevanceScore(b, tokens) - relevanceScore(a, tokens));
+  }
+  return filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+}
+
+export function facetCounts(jobs: Job[]): {
+  country: Record<string, number>;
+  category: Record<string, number>;
+  type: Record<string, number>;
+} {
+  const out = { country: {} as Record<string, number>, category: {} as Record<string, number>, type: {} as Record<string, number> };
+  for (const j of jobs) {
+    out.country[j.country] = (out.country[j.country] || 0) + 1;
+    out.category[j.category] = (out.category[j.category] || 0) + 1;
+    if (j.type) out.type[j.type] = (out.type[j.type] || 0) + 1;
+  }
+  return out;
 }
 
 export const COUNTRY_LIST = [

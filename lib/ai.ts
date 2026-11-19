@@ -1,11 +1,13 @@
 import { SYSTEM_PROMPT } from "./tools";
 
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+
 export async function runGemini(userPrompt: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
     throw new Error("GEMINI_API_KEY is not set on this deployment. Add it in Vercel project settings (Environment Variables), then redeploy.");
   }
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + key;
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + key;
   const body = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: [{ role: "user", parts: [{ text: userPrompt }] }],
