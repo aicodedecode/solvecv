@@ -4,6 +4,8 @@ import { publicTools } from "@/lib/tools";
 import Reveal from "@/components/Reveal";
 import CountUp from "@/components/CountUp";
 import Parallax from "@/components/Parallax";
+import LetterFlow from "@/components/LetterFlow";
+import Spotlight from "@/components/Spotlight";
 import type { Job } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +41,10 @@ export default async function Home() {
         <Parallax speed={0.08} className="absolute w-[420px] h-[420px] top-10 right-0">
           <div className="orb w-[420px] h-[420px] animate-float-slow" style={{ background: "radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%)" }} />
         </Parallax>
+        <div className="absolute inset-x-0 bottom-0 h-[420px] pointer-events-none" aria-hidden="true">
+          <div className="aurora aurora-teal w-[560px] h-[360px] -bottom-44 left-1/4" />
+          <div className="aurora aurora-blue w-[520px] h-[340px] -bottom-36 right-1/4" />
+        </div>
         <div className="max-w-6xl mx-auto px-4 pt-24 pb-20 relative">
           <div className="max-w-3xl">
             <Reveal>
@@ -47,13 +53,10 @@ export default async function Home() {
                 Free. No signup. No resume upload.
               </div>
             </Reveal>
-            <Reveal delay={90}>
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] mb-6">
-                The job hunt, minus
-                <br />
-                <span className="gradient-text">everything that wastes it.</span>
-              </h1>
-            </Reveal>
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.08] mb-6">
+              <LetterFlow text="The job hunt, minus" startDelay={120} />
+              <LetterFlow text="everything that wastes it." gradient startDelay={420} />
+            </h1>
             <Reveal delay={180}>
               <p className="text-lg text-zinc-400 max-w-xl mb-9 leading-relaxed">
                 Live openings from public job sources, 28 AI tools that write the documents, score the resume, and run the interview. Everything stays in your browser.
@@ -96,7 +99,8 @@ export default async function Home() {
           <div className="grid md:grid-cols-2 gap-4">
             {jobs.map((j, i) => (
               <Reveal key={j.id} delay={Math.min(i * 70, 350)}>
-                <Link href={`/jobs/${j.id}`} className="glass card-hover p-5 block group">
+                <Spotlight className="h-full">
+                <Link href={`/jobs/${j.id}`} className="glass card-hover p-5 block group h-full">
                   <div className="flex justify-between gap-3 mb-2">
                     <div className="font-medium group-hover:text-emerald-300 transition-colors truncate">{j.title}</div>
                     <span className="shrink-0 text-[10px] uppercase tracking-wider font-mono text-zinc-500 border border-white/10 rounded-full px-2 py-0.5">{j.source}</span>
@@ -106,6 +110,7 @@ export default async function Home() {
                     <span className="shrink-0 font-mono text-xs">{j.location}</span>
                   </div>
                 </Link>
+                </Spotlight>
               </Reveal>
             ))}
           </div>
@@ -153,6 +158,7 @@ export default async function Home() {
         <div className="grid md:grid-cols-3 gap-4">
           {featured.map((t, i) => (
             <Reveal key={t.slug} delay={Math.min(i * 80, 400)}>
+              <Spotlight className="h-full">
               <Link
                 href={t.customPage || `/tools/${t.slug}`}
                 className={`glass card-hover p-6 block group h-full ${i === 0 ? "md:col-span-2 relative overflow-hidden" : ""}`}
@@ -164,6 +170,7 @@ export default async function Home() {
                 <div className="font-semibold text-lg mb-1.5 group-hover:text-emerald-300 transition-colors">{t.name}</div>
                 <div className="text-sm text-zinc-500 leading-relaxed">{t.blurb}</div>
               </Link>
+              </Spotlight>
             </Reveal>
           ))}
         </div>
