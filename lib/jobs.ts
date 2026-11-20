@@ -181,10 +181,10 @@ async function loadRemoteOk(): Promise<Job[]> {
 }
 
 const ADZUNA_FEEDS: [string, string, string][] = [
-  ["in", "india", "₹"],
-  ["gb", "united kingdom", "£"],
+  ["in", "india", "\u20b9"],
+  ["gb", "united kingdom", "\u00a3"],
   ["us", "united states", "$"],
-  ["de", "germany", "€"],
+  ["de", "germany", "\u20ac"],
   ["ca", "canada", "C$"],
 ];
 
@@ -201,7 +201,7 @@ async function loadAdzuna(): Promise<Job[]> {
       const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=50&content-type=application/json`;
       const data = (await fetchJson(url)) as { results?: Raw[] };
       return ((data.results || []) as Raw[]).map((j: Raw): Job => {
-        const title = s(j, "title").replace(<[^>]+>/g, "").trim();
+        const title = s(j, "title").replace(/<[^>]+>/g, "").trim();
         const company = s(sub(j, "company"), "display_name");
         const loc = s(sub(j, "location"), "display_name");
         const remote = /remote|work from home/i.test(loc);
@@ -209,7 +209,7 @@ async function loadAdzuna(): Promise<Job[]> {
         const max = typeof j.salary_max === "number" ? (j.salary_max as number) : 0;
         const salary =
           min > 0 && max > 0
-            ? `${currency}${compactMoney(min)} – ${currency}${compactMoney(max)}`
+            ? `${currency}${compactMoney(min)} \u2013 ${currency}${compactMoney(max)}`
             : min > 0
               ? `${currency}${compactMoney(min)}+`
               : undefined;
