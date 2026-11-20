@@ -181,10 +181,10 @@ async function loadRemoteOk(): Promise<Job[]> {
 }
 
 const ADZUNA_FEEDS: [string, string, string][] = [
-  ["in", "india", "\u20b9"],
-  ["gb", "united kingdom", "\u00a3"],
+  ["in", "india", "₹"],
+  ["gb", "united kingdom", "£"],
   ["us", "united states", "$"],
-  ["de", "germany", "\u20ac"],
+  ["de", "germany", "€"],
   ["ca", "canada", "C$"],
 ];
 
@@ -201,7 +201,7 @@ async function loadAdzuna(): Promise<Job[]> {
       const url = `https://api.adzuna.com/v1/api/jobs/${cc}/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=50&content-type=application/json`;
       const data = (await fetchJson(url)) as { results?: Raw[] };
       return ((data.results || []) as Raw[]).map((j: Raw): Job => {
-        const title = s(j, "title").replace(/<[^>]+>/g, "").trim();
+        const title = s(j, "title").replace(<[^>]+>/g, "").trim();
         const company = s(sub(j, "company"), "display_name");
         const loc = s(sub(j, "location"), "display_name");
         const remote = /remote|work from home/i.test(loc);
@@ -209,7 +209,7 @@ async function loadAdzuna(): Promise<Job[]> {
         const max = typeof j.salary_max === "number" ? (j.salary_max as number) : 0;
         const salary =
           min > 0 && max > 0
-            ? `${currency}${compactMoney(min)} \u2013 ${currency}${compactMoney(max)}`
+            ? `${currency}${compactMoney(min)} – ${currency}${compactMoney(max)}`
             : min > 0
               ? `${currency}${compactMoney(min)}+`
               : undefined;
@@ -268,18 +268,57 @@ export type FilterOpts = {
   sort?: "date" | "relevance";
 };
 
+const isWordChar = (c: string) => /[a-z0-9+#.]/.test(c);
+
+// "exact": token is a full word in hay ("react" inside "react developer").
+// "prefix": token starts a word but extends it ("analyst" inside "analysts").
+function wordMatch(hay: string, token: string): "exact" | "prefix" | "none" {
+  if (!hay || !token) return "none";
+  let i = hay.indexOf(token);
+  while (i !== -1) {
+    const before = i === 0 ? " " : hay[i - 1];
+    const end = i + token.length;
+    const after = end >= hay.length ? " " : hay[end];
+    if (!isWordChar(before) && !isWordChar(after)) return "exact";
+    if (!isWordChar(before)) return "prefix";
+    i = hay.indexOf(token, i + 1);
+  }
+  return "none";
+}
+
+function recencyBonus(date: string | null): number {
+  if (!date) return 0;
+  const age = Date.now() - Date.parse(date);
+  if (!Number.isFinite(age)) return 0;
+  const days = age / 86400000;
+  if (days <= 3) return 2;
+  if (days <= 7) return 1;
+  if (days <= 14) return 0.5;
+  return 0;
+}
+
 export function relevanceScore(j: Job, tokens: string[]): number {
   const title = j.title.toLowerCase();
   const company = j.company.toLowerCase();
   const tags = j.tags.join(" ").toLowerCase();
+  const location = j.location.toLowerCase();
   let score = 0;
   for (const t of tokens) {
-    if (title.includes(t)) score += 3;
-    else if (tags.includes(t)) score += 1.5;
-    if (company.includes(t)) score += 1;
+    const tm = wordMatch(title, t);
+    if (tm === "exact") score += 4;
+    else if (tm === "prefix") score += 2;
+    const gm = wordMatch(tags, t);
+    if (gm === "exact") score += 1.5;
+    else if (gm === "prefix") score += 0.75;
+    if (wordMatch(company, t) !== "none") score += 1;
+    if (wordMatch(location, t) !== "none") score += 1;
   }
-  if (tokens.length > 0 && title.startsWith(tokens[0])) score += 1;
-  return score;
+  if (tokens.length > 1) {
+    const phrase = tokens.join(" ");
+    if (title.includes(phrase)) score += 3;
+    else if (tags.includes(phrase) || location.includes(phrase)) score += 1.5;
+  }
+  return score + recencyBonus(j.date);
 }
 
 export function filterJobs(jobs: Job[], opts: FilterOpts): Job[] {
@@ -291,13 +330,17 @@ export function filterJobs(jobs: Job[], opts: FilterOpts): Job[] {
     if (opts.category && opts.category !== "all" && j.category !== opts.category) return false;
     if (opts.type && opts.type !== "all" && j.type !== opts.type) return false;
     if (q) {
-      const hay = (j.title + " " + j.company + " " + j.tags.join(" ")).toLowerCase();
-      if (!tokens.every((t) => hay.includes(t))) return false;
+      const hay = (j.title + " " + j.company + " " + j.tags.join(" ") + " " + j.location).toLowerCase();
+      if (!tokens.every((t) => wordMatch(hay, t) !== "none")) return false;
     }
     return true;
   });
   if (tokens.length > 0 && opts.sort !== "date") {
-    return filtered.sort((a, b) => relevanceScore(b, tokens) - relevanceScore(a, tokens));
+    return filtered.sort(
+      (a, b) =>
+        relevanceScore(b, tokens) - relevanceScore(a, tokens) ||
+        (b.date || "").localeCompare(a.date || "")
+    );
   }
   return filtered.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 }
